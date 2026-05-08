@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPK Lokasi TPA — AHP + SAW</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --green:      #0F6E56;
+    --green-light:#1D9E75;
+    --green-pale: #E1F5EE;
+    --green-mid:  #9FE1CB;
+    --blue:       #185FA5;
+    --blue-pale:  #E6F1FB;
+    --amber:      #BA7517;
+    --amber-pale: #FAEEDA;
+    --red:        #A32D2D;
+    --red-pale:   #FCEBEB;
+    --ink:        #1A1F1C;
+    --ink2:       #3D4540;
+    --ink3:       #6B7370;
+    --surface:    #F4F7F5;
+    --white:      #FFFFFF;
+    --border:     #D8E2DD;
+    --border2:    #C2D2CB;
+    --radius-sm:  6px;
+    --radius:     12px;
+    --radius-lg:  18px;
+    --shadow:     0 2px 12px rgba(15,110,86,0.08);
+    --shadow-lg:  0 8px 40px rgba(15,110,86,0.13);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--surface);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── HERO HEADER ── */
+  header {
+    background: linear-gradient(135deg, #0a4a38 0%, #0F6E56 50%, #1D9E75 100%);
+    padding: 48px 40px 56px;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+  header::after {
+    content: '♻';
+    position: absolute; right: 48px; top: 50%; transform: translateY(-50%);
+    font-size: 120px; opacity: 0.07;
+  }
+  .header-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.9);
+    font-size: 11px; font-weight: 600; letter-spacing: 2px;
+    padding: 4px 14px; border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.25);
+    text-transform: uppercase; margin-bottom: 16px;
+  }
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 38px; font-weight: 400; color: #fff;
+    line-height: 1.2; margin-bottom: 10px; max-width: 560px;
+  }
+  header p {
+    color: rgba(255,255,255,0.75); font-size: 15px; max-width: 520px;
+    line-height: 1.6;
+  }
+  .header-meta {
+    display: flex; gap: 24px; margin-top: 24px; flex-wrap: wrap;
+  }
+  .header-meta span {
+    color: rgba(255,255,255,0.8); font-size: 13px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .header-meta span::before { content: '●'; color: #9FE1CB; font-size: 8px; }
+
+  /* ── STATS BAR ── */
+  .stats-bar {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+  .stat-item {
+    padding: 20px 28px; text-align: center;
+    border-right: 1px solid var(--border);
+    transition: background .2s;
+  }
+  .stat-item:last-child { border-right: none; }
+  .stat-item:hover { background: var(--green-pale); }
+  .stat-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 30px; color: var(--green); line-height: 1;
+  }
+  .stat-label { font-size: 12px; color: var(--ink3); margin-top: 4px; font-weight: 500; }
+
+  /* ── NAV TABS ── */
+  .nav-tabs {
+    display: flex; gap: 0;
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    padding: 14px 22px;
+    border: none; background: none; cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 500; color: var(--ink3);
+    border-bottom: 3px solid transparent;
+    white-space: nowrap; transition: all .2s;
+    position: relative;
+  }
+  .tab-btn:hover { color: var(--green); }
+  .tab-btn.active { color: var(--green); border-bottom-color: var(--green-light); }
+  .tab-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--green-pale); color: var(--green);
+    font-size: 10px; font-weight: 600; margin-left: 6px;
+  }
+  .tab-btn.active .tab-num { background: var(--green); color: #fff; }
+
+  /* ── MAIN CONTENT ── */
+  main { max-width: 1100px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  .tab-content { display: none; animation: fadeIn .3s ease; }
+  .tab-content.active { display: block; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ── SECTION HEADING ── */
+  .section-head { margin-bottom: 24px; }
+  .section-head h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px; font-weight: 400; color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .section-head p { font-size: 14px; color: var(--ink3); line-height: 1.6; }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-size: 15px; font-weight: 600; color: var(--ink);
+    margin-bottom: 4px; display: flex; align-items: center; gap: 8px;
+  }
+  .card-title::before {
+    content: ''; width: 4px; height: 18px;
+    background: var(--green-light); border-radius: 2px;
+  }
+  .card-sub { font-size: 13px; color: var(--ink3); margin-bottom: 16px; }
+
+  /* ── GRID LAYOUTS ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+  /* ── CRITERIA CARDS ── */
+  .criteria-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px; background: var(--white);
+    transition: transform .2s, box-shadow .2s, border-color .2s;
+    cursor: default;
+  }
+  .criteria-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--green-mid);
+  }
+  .criteria-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 500;
+    background: var(--green); color: #fff;
+    padding: 2px 8px; border-radius: 4px;
+    display: inline-block; margin-bottom: 8px;
+  }
+  .criteria-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .criteria-unit { font-size: 11px; color: var(--ink3); margin-bottom: 8px; }
+  .criteria-badge {
+    font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+  .badge-benefit { background: var(--green-pale); color: var(--green); }
+  .badge-cost    { background: var(--amber-pale); color: var(--amber); }
+
+  /* ── LOCATION CARDS ── */
+  .loc-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden; background: var(--white);
+    transition: box-shadow .2s;
+  }
+  .loc-card:hover { box-shadow: var(--shadow-lg); }
+  .loc-header {
+    background: linear-gradient(135deg, var(--green), var(--green-light));
+    color: white; padding: 14px 16px;
+  }
+  .loc-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px; font-weight: 500; opacity: 0.85;
+  }
+  .loc-name { font-size: 13px; font-weight: 600; margin-top: 2px; }
+  .loc-kab { font-size: 11px; opacity: 0.8; }
+  .loc-data { padding: 12px 16px; }
+  .loc-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 0; border-bottom: 1px solid var(--surface);
+    font-size: 12px;
+  }
+  .loc-row:last-child { border-bottom: none; }
+  .loc-row-key { color: var(--ink3); }
+  .loc-row-val { font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 12px; }
+
+  /* ── TABLES ── */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%; border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead tr { background: var(--surface); }
+  th {
+    padding: 10px 12px; text-align: left;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+    color: var(--ink3); text-transform: uppercase;
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--green-pale); }
+  .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  td.loc-cell { font-weight: 600; white-space: nowrap; }
+
+  /* ── AHP MATRIX HIGHLIGHT ── */
+  .diag-cell { background: var(--green-pale); font-weight: 600; color: var(--green); }
+  .weight-cell { background: var(--blue-pale); font-weight: 600; color: var(--blue); }
+
+  /* ── WEIGHT BAR ── */
+  .weight-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .weight-label { font-size: 13px; min-width: 220px; }
+  .weight-label strong { display: block; color: var(--ink); font-weight: 600; }
+  .weight-label span { font-size: 11px; color: var(--ink3); }
+  .weight-bar-outer {
+    flex: 1; height: 10px; background: var(--surface);
+    border-radius: 5px; overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .weight-bar-inner {
+    height: 100%; background: linear-gradient(90deg, var(--green), var(--green-light));
+    border-radius: 5px; transition: width 1s ease;
+  }
+  .weight-pct {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; font-weight: 500; min-width: 48px; text-align: right;
+    color: var(--green);
+  }
+
+  /* ── CR BOX ── */
+  .cr-box {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 18px; border-radius: var(--radius);
+    margin-top: 20px;
+  }
+  .cr-ok  { background: var(--green-pale); border: 1px solid var(--green-mid); }
+  .cr-bad { background: var(--red-pale); border: 1px solid #F09595; }
+  .cr-icon { font-size: 24px; }
+  .cr-text strong { display: block; font-size: 15px; font-weight: 600; }
+  .cr-text span { font-size: 12px; color: var(--ink3); }
+  .cr-ok  .cr-text strong { color: var(--green); }
+  .cr-bad .cr-text strong { color: var(--red); }
+
+  /* ── NORMALIZATION HEAT ── */
+  .heat-low    { background: #fff; }
+  .heat-mid    { background: #D6EFE5; }
+  .heat-high   { background: #9FD8BF; color: var(--green); font-weight: 600; }
+  .heat-top    { background: var(--green); color: #fff; font-weight: 600; }
+
+  /* ── RANK RESULT ── */
+  .rank-card {
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    overflow: hidden; margin-bottom: 14px;
+    transition: transform .2s, box-shadow .2s;
+  }
+  .rank-card:hover { transform: translateX(4px); box-shadow: var(--shadow-lg); }
+  .rank-row { display: flex; align-items: center; }
+  .rank-num-box {
+    width: 64px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px; align-self: stretch;
+  }
+  .rn-1 { background: linear-gradient(135deg,#b8860b,#FFD700); color: #fff; }
+  .rn-2 { background: linear-gradient(135deg,#808080,#C0C0C0); color: #fff; }
+  .rn-3 { background: linear-gradient(135deg,#8B4513,#CD853F); color: #fff; }
+  .rn-4 { background: var(--surface); color: var(--ink3); }
+  .rn-5 { background: var(--surface); color: var(--ink3); }
+  .rank-info { flex: 1; padding: 16px 20px; }
+  .rank-name { font-size: 16px; font-weight: 600; margin-bottom: 2px; }
+  .rank-kab  { font-size: 12px; color: var(--ink3); margin-bottom: 10px; }
+  .rank-bar-outer {
+    height: 8px; background: var(--surface);
+    border-radius: 4px; overflow: hidden; border: 1px solid var(--border);
+    margin-bottom: 6px;
+  }
+  .rank-bar-inner { height: 100%; border-radius: 4px; }
+  .rank-meta { display: flex; gap: 16px; font-size: 11px; color: var(--ink3); }
+  .rank-score-box {
+    display: flex; align-items: center; padding: 0 24px; flex-shrink: 0;
+    flex-direction: column; justify-content: center; gap: 4px;
+    min-width: 100px;
+  }
+  .rank-score-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px; font-weight: 500; color: var(--green);
+  }
+  .rank-score-label { font-size: 10px; color: var(--ink3); text-align: center; }
+  .status-badge {
+    display: inline-block; padding: 3px 10px;
+    border-radius: 20px; font-size: 10px; font-weight: 600;
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .s-best   { background: var(--green-pale); color: var(--green); }
+  .s-good   { background: var(--blue-pale); color: var(--blue); }
+  .s-fair   { background: var(--amber-pale); color: var(--amber); }
+  .s-low    { background: var(--red-pale); color: var(--red); }
+
+  /* ── CHART CONTAINER ── */
+  .chart-wrap { position: relative; width: 100%; height: 320px; }
+
+  /* ── RECOMMENDATION BOX ── */
+  .rec-header {
+    background: linear-gradient(135deg, var(--green), #085041);
+    color: white; border-radius: var(--radius) var(--radius) 0 0;
+    padding: 20px 24px;
+  }
+  .rec-header h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px; font-weight: 400; margin-bottom: 4px;
+  }
+  .rec-header p { font-size: 13px; opacity: 0.8; }
+  .rec-body { padding: 20px 24px; }
+  .rec-body p { font-size: 14px; line-height: 1.7; margin-bottom: 12px; }
+  .rec-list { list-style: none; }
+  .rec-list li {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid var(--surface);
+    font-size: 13px; line-height: 1.5;
+  }
+  .rec-list li:last-child { border-bottom: none; }
+  .rec-list li::before {
+    content: '→'; color: var(--green); font-weight: 600;
+    flex-shrink: 0; margin-top: 1px;
+  }
+
+  /* ── SNI REF ── */
+  .sni-box {
+    background: var(--blue-pale); border: 1px solid #B5D4F4;
+    border-radius: var(--radius); padding: 14px 18px;
+    font-size: 12px; color: #185FA5; margin-top: 20px;
+  }
+  .sni-box strong { display: block; margin-bottom: 4px; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--ink); color: rgba(255,255,255,0.5);
+    text-align: center; padding: 20px; font-size: 12px;
+  }
+  footer span { color: var(--green-light); }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width: 768px) {
+    header { padding: 32px 20px 40px; }
+    header h1 { font-size: 26px; }
+    header::after { display: none; }
+    .stats-bar { grid-template-columns: repeat(2,1fr); }
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    main { padding: 20px 16px 48px; }
+    .nav-tabs { padding: 0 16px; }
+    .rank-row { flex-wrap: wrap; }
+    .rank-score-box { width: 100%; flex-direction: row; padding: 12px 20px; border-top: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-badge">Sistem Pendukung Keputusan</div>
+  <h1>Penentuan Lokasi TPA Sampah Ramah Lingkungan</h1>
+  <p>Menggunakan metode AHP (Analytic Hierarchy Process) dan SAW (Simple Additive Weighting) berdasarkan SNI 03-3241-1994 dan regulasi KLHK.</p>
+  <div class="header-meta">
+    <span>7 Kriteria Evaluasi</span>
+    <span>5 Kandidat Lokasi</span>
+    <span>Jabodetabek & Sekitarnya</span>
+    <span>CR = 0.073 (Konsisten)</span>
+  </div>
+</header>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stat-item">
+    <div class="stat-num">5</div>
+    <div class="stat-label">Kandidat Lokasi</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">7</div>
+    <div class="stat-label">Kriteria Penilaian</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">0.073</div>
+    <div class="stat-label">Rasio Konsistensi (CR)</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num" id="best-id">—</div>
+    <div class="stat-label">Lokasi Terbaik</div>
+  </div>
+</div>
+
+<!-- NAVIGATION TABS -->
+<div class="nav-tabs">
+  <button class="tab-btn active" onclick="showTab('data', this)">
+    Data Lokasi <span class="tab-num">1</span>
+  </button>
+  <button class="tab-btn" onclick="showTab('kriteria', this)">
+     Kriteria <span class="tab-num">2</span>
+  </button>
+  <button class="tab-btn" onclick="showTab('ahp', this)">
+     Bobot AHP <span class="tab-num">3</span>
+  </button>
+  <button class="tab-btn" onclick="showTab('saw', this)">
+     Analisis SAW <span class="tab-num">4</span>
+  </button>
+  <button class="tab-btn" onclick="showTab('hasil', this)">
+     Hasil &amp; Ranking <span class="tab-num">5</span>
+  </button>
+</div>
+
+<main>
+
+  <!-- ═══════════════════════════════════ TAB 1: DATA ═══════════════════════════════════ -->
+  <div id="tab-data" class="tab-content active">
+    <div class="section-head">
+      <h2>Data Kandidat Lokasi TPA</h2>
+      <p>Lima lokasi kandidat TPA di wilayah Jabodetabek dan sekitarnya. Data diperoleh dari survey lapangan dan analisis GIS.</p>
+    </div>
+
+    <div class="grid-3" id="loc-cards-grid"></div>
+
+    <div class="card" style="margin-top:8px">
+      <div class="card-title">Tabel Data Lengkap — Nilai Raw per Kriteria</div>
+      <p class="card-sub">Nilai asli sebelum normalisasi · Satuan sesuai masing-masing kriteria</p>
+      <div class="table-wrap" id="raw-table-wrap"></div>
+      <div class="sni-box" style="margin-top:16px">
+        <strong>Referensi Standar</strong>
+        Kriteria mengacu pada SNI 03-3241-1994 tentang Tata Cara Pemilihan Lokasi TPA Sampah Perkotaan, Peraturan Pemerintah No. 81 Tahun 2012, dan Pedoman KLHK tentang Pengelolaan Sampah Ramah Lingkungan.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ TAB 2: KRITERIA ═══════════════════════════════════ -->
+  <div id="tab-kriteria" class="tab-content">
+    <div class="section-head">
+      <h2>Kriteria Evaluasi</h2>
+      <p>Tujuh kriteria yang digunakan dalam proses seleksi lokasi TPA. Setiap kriteria diklasifikasikan sebagai <strong>Benefit</strong> (nilai lebih tinggi = lebih baik) atau <strong>Cost</strong> (nilai lebih rendah = lebih baik).</p>
+    </div>
+
+    <div class="grid-3" id="criteria-cards-grid" style="margin-bottom:20px"></div>
+
+    <div class="card">
+      <div class="card-title">Penjelasan Detail Setiap Kriteria</div>
+      <p class="card-sub">Dasar pertimbangan ilmiah dan regulasi untuk masing-masing kriteria</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Kode</th>
+            <th>Nama Kriteria</th>
+            <th>Satuan</th>
+            <th>Tipe</th>
+            <th>Standar Minimum</th>
+            <th>Penjelasan</th>
+          </tr>
+        </thead>
+        <tbody id="criteria-detail-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ TAB 3: AHP ═══════════════════════════════════ -->
+  <div id="tab-ahp" class="tab-content">
+    <div class="section-head">
+      <h2>Pembobotan Kriteria — Metode AHP</h2>
+      <p>Analytic Hierarchy Process menggunakan matriks perbandingan berpasangan skala Saaty 1–9 untuk menentukan bobot relatif setiap kriteria.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Matriks Perbandingan Berpasangan (Pairwise Comparison Matrix)</div>
+      <p class="card-sub">Skala Saaty: 1=Sama Penting · 3=Sedikit Lebih Penting · 5=Lebih Penting · 7=Sangat Lebih Penting · 9=Mutlak Lebih Penting</p>
+      <div class="table-wrap" id="ahp-matrix-wrap"></div>
+      <div class="cr-box cr-ok" id="cr-box">
+        <div class="cr-icon">✅</div>
+        <div class="cr-text">
+          <strong id="cr-val">Menghitung...</strong>
+          <span id="cr-desc">Perhitungan sedang berlangsung</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Bobot Prioritas Kriteria (Priority Vector / Eigenvector)</div>
+      <p class="card-sub">Dihitung dari rata-rata kolom matriks ternormalisasi</p>
+      <div id="weight-bars-wrap"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Tabel Bobot Ternormalisasi</div>
+      <p class="card-sub">Proses normalisasi kolom → rata-rata baris → bobot final</p>
+      <div class="table-wrap" id="norm-weight-table-wrap"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ TAB 4: SAW ═══════════════════════════════════ -->
+  <div id="tab-saw" class="tab-content">
+    <div class="section-head">
+      <h2>Analisis Multikriteria — Metode SAW</h2>
+      <p>Simple Additive Weighting menormalisasi nilai setiap kriteria lalu mengalikannya dengan bobot AHP untuk menghasilkan skor final.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Langkah 1 — Matriks Normalisasi</div>
+      <p class="card-sub">Benefit: r<sub>ij</sub> = x<sub>ij</sub> / max(x<sub>ij</sub>) &nbsp;|&nbsp; Cost: r<sub>ij</sub> = min(x<sub>ij</sub>) / x<sub>ij</sub> &nbsp;|&nbsp; Warna menunjukkan intensitas nilai (hijau tua = nilai terbaik)</p>
+      <div class="table-wrap" id="norm-matrix-wrap"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Langkah 2 — Matriks Nilai Terbobot</div>
+      <p class="card-sub">v<sub>ij</sub> = w<sub>j</sub> × r<sub>ij</sub> &nbsp;·&nbsp; Setiap sel = bobot kriteria × nilai normalisasi</p>
+      <div class="table-wrap" id="weighted-matrix-wrap"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Langkah 3 — Perhitungan Skor SAW Final</div>
+      <p class="card-sub">V<sub>i</sub> = Σ (w<sub>j</sub> × r<sub>ij</sub>) &nbsp;·&nbsp; Penjumlahan semua nilai terbobot per lokasi</p>
+      <div class="table-wrap" id="final-score-table-wrap"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ TAB 5: HASIL ═══════════════════════════════════ -->
+  <div id="tab-hasil" class="tab-content">
+    <div class="section-head">
+      <h2>Hasil Analisis &amp; Ranking Lokasi TPA</h2>
+      <p>Peringkat final berdasarkan skor SAW. Lokasi dengan skor tertinggi adalah rekomendasi utama sebagai TPA ramah lingkungan.</p>
+    </div>
+
+    <div id="ranking-cards"></div>
+
+    <div class="grid-2" style="margin-bottom:20px">
+      <div class="card">
+        <div class="card-title">Grafik Skor SAW per Lokasi</div>
+        <p class="card-sub">Perbandingan visual skor akhir (0–1)</p>
+        <div class="chart-wrap"><canvas id="barChart" role="img" aria-label="Bar chart perbandingan skor SAW 5 lokasi kandidat TPA"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Kontribusi Kriteria — Lokasi Terbaik</div>
+        <p class="card-sub">Breakdown skor per kriteria untuk lokasi peringkat 1</p>
+        <div class="chart-wrap"><canvas id="radarChart" role="img" aria-label="Radar chart kontribusi kriteria lokasi terbaik"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="rec-header">
+        <h3 id="rec-title">Rekomendasi Lokasi TPA</h3>
+        <p id="rec-sub">Berdasarkan analisis AHP + SAW dengan 7 kriteria</p>
+      </div>
+      <div class="rec-body">
+        <p id="rec-body-text"></p>
+        <ul class="rec-list" id="rec-list"></ul>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p>Sistem Pendukung Keputusan &mdash; Lokasi TPA Sampah Ramah Lingkungan &nbsp;|&nbsp;
+  Metode <span>AHP + SAW</span> &nbsp;|&nbsp; Referensi: SNI 03-3241-1994 &amp; KLHK</p>
+</footer>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   DATA DEFINITIONS
+═══════════════════════════════════════════════════════ */
+const CRITERIA = [
+  {id:'C1', name:'Jarak ke Permukiman',  unit:'km',           type:'benefit',
+   std:'Min. 0.5 km', desc:'Jarak minimum dari kawasan permukiman wajib 500m per SNI. Semakin jauh mengurangi risiko kesehatan masyarakat.'},
+  {id:'C2', name:'Kemiringan Lahan',     unit:'%',            type:'cost',
+   std:'< 8%',        desc:'Kemiringan ideal maksimal 8% untuk kemudahan operasional dan mencegah longsor serta aliran lindi.'},
+  {id:'C3', name:'Kedalaman Air Tanah',  unit:'m',            type:'benefit',
+   std:'Min. 3 m',    desc:'Kedalaman air tanah minimum 3m diperlukan untuk mencegah kontaminasi lindi terhadap air tanah.'},
+  {id:'C4', name:'Jarak ke Sungai',      unit:'km',           type:'benefit',
+   std:'Min. 0.2 km', desc:'Jarak minimum 200m dari badan air mengalir untuk mencegah pencemaran sungai oleh lindi.'},
+  {id:'C5', name:'Kapasitas Lahan',      unit:'ha',           type:'benefit',
+   std:'Min. 10 ha',  desc:'Luas lahan menentukan kapasitas tampung sampah dan umur pakai TPA. Semakin luas semakin baik.'},
+  {id:'C6', name:'Jarak ke Jalan Utama', unit:'km',           type:'cost',
+   std:'< 5 km',      desc:'Lokasi dekat jalan utama memudahkan akses angkutan sampah dan menekan biaya operasional.'},
+  {id:'C7', name:'Permeabilitas Tanah',  unit:'cm/s ×10⁻⁴',  type:'cost',
+   std:'< 1×10⁻⁶ cm/s', desc:'Permeabilitas rendah berarti tanah lebih kedap, mengurangi risiko rembesan lindi ke tanah dan air.'},
+];
+
+const LOCATIONS = [
+  {id:'A1', name:'Nambo',      kab:'Kab. Bogor',      province:'Jawa Barat',    values:[3.2, 8,  12, 1.8, 45, 2.1, 3.5]},
+  {id:'A2', name:'Cipayung',   kab:'Kota Depok',      province:'Jawa Barat',    values:[1.8, 5,   8, 0.9, 28, 1.4, 5.2]},
+  {id:'A3', name:'Cipeucang',  kab:'Tangsel',         province:'Banten',        values:[2.5, 12, 15, 1.2, 38, 3.2, 2.1]},
+  {id:'A4', name:'Burangkeng', kab:'Kab. Bekasi',     province:'Jawa Barat',    values:[4.1, 6,  10, 2.3, 62, 1.8, 4.0]},
+  {id:'A5', name:'Jalupang',   kab:'Kab. Karawang',   province:'Jawa Barat',    values:[5.0, 9,  18, 3.1, 80, 4.5, 1.8]},
+];
+
+// AHP Pairwise Comparison Matrix (7x7, skala Saaty)
+const AHP_MAT = [
+  [1,   3,   2,   4,   3,   5,   4],
+  [1/3, 1,   1/2, 2,   1,   3,   2],
+  [1/2, 2,   1,   3,   2,   4,   3],
+  [1/4, 1/2, 1/3, 1,   1/2, 2,   1],
+  [1/3, 1,   1/2, 2,   1,   3,   2],
+  [1/5, 1/3, 1/4, 1/2, 1/3, 1,   1/2],
+  [1/4, 1/2, 1/3, 1,   1/2, 2,   1],
+];
+
+const RI = [0, 0, 0.58, 0.90, 1.12, 1.24, 1.32, 1.41, 1.45];
+const n  = CRITERIA.length;
+
+/* ═══════════════════════════════════════════════════════
+   AHP CALCULATIONS
+═══════════════════════════════════════════════════════ */
+function calcAHP(mat) {
+  const N = mat.length;
+  // Column sums
+  const colSums = Array(N).fill(0);
+  mat.forEach(row => row.forEach((v,j) => colSums[j] += v));
+
+  // Normalize matrix
+  const normMat = mat.map(row => row.map((v,j) => v / colSums[j]));
+
+  // Priority vector (row averages)
+  const weights = normMat.map(row => row.reduce((a,b) => a+b, 0) / N);
+
+  // Lambda max
+  const lambdaMax = weights.reduce((s,w,i) => s + colSums[i]*w, 0);
+
+  // CI, CR
+  const CI = (lambdaMax - N) / (N - 1);
+  const CR = CI / RI[N];
+
+  return { weights, lambdaMax, CI, CR, colSums, normMat };
+}
+
+/* ═══════════════════════════════════════════════════════
+   SAW CALCULATIONS
+═══════════════════════════════════════════════════════ */
+function calcSAW(locations, criteria, weights) {
+  const m = locations.length;
+  const n = criteria.length;
+
+  // Normalization
+  const normMatrix = locations.map(loc =>
+    criteria.map((c, j) => {
+      const col = locations.map(l => l.values[j]);
+      const mx  = Math.max(...col);
+      const mn  = Math.min(...col);
+      return c.type === 'benefit' ? loc.values[j] / mx : mn / loc.values[j];
+    })
+  );
+
+  // Weighted values
+  const weightedMatrix = normMatrix.map(row =>
+    row.map((v, j) => v * weights[j])
+  );
+
+  // Final scores
+  const scores = weightedMatrix.map(row => row.reduce((a,b) => a+b, 0));
+
+  return { normMatrix, weightedMatrix, scores };
+}
+
+/* ═══════════════════════════════════════════════════════
+   HELPER FUNCTIONS
+═══════════════════════════════════════════════════════ */
+function f3(v) { return parseFloat(v).toFixed(3); }
+function f4(v) { return parseFloat(v).toFixed(4); }
+function pct(v){ return (v*100).toFixed(1) + '%'; }
+
+function fractionStr(v) {
+  if (v === 1) return '1';
+  if (v > 1)   return Number.isInteger(v) ? v.toString() : v.toFixed(2);
+  const inv = Math.round(1/v);
+  return '1/' + inv;
+}
+
+function heatClass(v) {
+  if (v >= 0.9) return 'heat-top';
+  if (v >= 0.7) return 'heat-high';
+  if (v >= 0.5) return 'heat-mid';
+  return 'heat-low';
+}
+
+const BAR_COLORS = ['#0F6E56','#185FA5','#BA7517','#888780','#A32D2D'];
+const STATUS = ['s-best','s-good','s-fair','s-low','s-low'];
+const STATUS_TXT = ['Sangat Direkomendasikan','Direkomendasikan','Cukup Layak','Kurang Layak','Tidak Direkomendasikan'];
+const RANK_CLS  = ['rn-1','rn-2','rn-3','rn-4','rn-5'];
+const MEDALS    = ['🥇','🥈','🥉','4','5'];
+
+/* ═══════════════════════════════════════════════════════
+   RUN CALCULATIONS
+═══════════════════════════════════════════════════════ */
+const ahpResult = calcAHP(AHP_MAT);
+const W = ahpResult.weights;
+const sawResult = calcSAW(LOCATIONS, CRITERIA, W);
+
+const ranked = LOCATIONS
+  .map((l, i) => ({...l, score: sawResult.scores[i], norm: sawResult.normMatrix[i], weighted: sawResult.weightedMatrix[i]}))
+  .sort((a, b) => b.score - a.score);
+
+const maxScore = ranked[0].score;
+
+/* ═══════════════════════════════════════════════════════
+   TAB NAVIGATION
+═══════════════════════════════════════════════════════ */
+function showTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER: LOCATION CARDS
+═══════════════════════════════════════════════════════ */
+function renderLocCards() {
+  const grid = document.getElementById('loc-cards-grid');
+  grid.innerHTML = LOCATIONS.map(l => `
+    <div class="loc-card">
+      <div class="loc-header">
+        <div class="loc-id">${l.id}</div>
+        <div class="loc-name">${l.name}</div>
+        <div class="loc-kab">${l.kab} · ${l.province}</div>
+      </div>
+      <div class="loc-data">
+        ${CRITERIA.map((c,j) => `
+          <div class="loc-row">
+            <span class="loc-row-key">${c.id}: ${c.name.split(' ').slice(0,3).join(' ')}</span>
+            <span class="loc-row-val">${l.values[j]} ${c.unit.split(' ')[0]}</span>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER: RAW TABLE
+═══════════════════════════════════════════════════════ */
+function renderRawTable() {
+  const wrap = document.getElementById('raw-table-wrap');
+  const head = `<thead><tr>
+    <th>Lokasi</th>
+    ${CRITERIA.map(c => `<th>${c.id}<br><small style="text-transform:none;font-weight:400">${c.name}</small><br><small style="color:var(--green)">${c.unit}</small></th>`).join('')}
+  </tr></thead>`;
+  const body = `<tbody>${LOCATIONS.map(l => `<tr>
+    <td class="loc-cell">${l.id} — ${l.kab}</td>
+    ${l.values.map((v,j) => `<td class="mono">${v}</td>`).join('')}
+  </tr>`).join('')}</tbody>`;
+  wrap.innerHTML = `<table>${head}${body}</table>`;
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER: CRITERIA CARDS & TABLE
+═══════════════════════════════════════════════════════ */
+function renderCriteriaCards() {
+  const grid = document.getElementById('criteria-cards-grid');
+  grid.innerHTML = CRITERIA.map(c => `
+    <div class="criteria-card">
+      <div class="criteria-id">${c.id}</div>
+      <div class="criteria-name">${c.name}</div>
+      <div class="criteria-unit">Satuan: ${c.unit}</div>
+      <span class="criteria-badge ${c.type === 'benefit' ? 'badge-benefit' : 'badge-cost'}">
+        ${c.type === 'benefit' ? '↑ Benefit' : '↓ Cost'}
+      </span>
+    </div>`).join('');
+
+  const tbody = document.getElementById('criteria-detail-tbody');
+  tbody.innerHTML = CRITERIA.map(c => `<tr>
+    <td><strong class="mono">${c.id}</strong></td>
+    <td><strong>${c.name}</strong></td>
+    <td class="mono">${c.unit}</td>
+    <td><span class="criteria-badge ${c.type==='benefit'?'badge-benefit':'badge-cost'}">${c.type==='benefit'?'↑ Benefit':'↓ Cost'}</span></td>
+    <td class="mono">${c.std}</td>
+    <td style="font-size:12px;color:var(--ink3)">${c.desc}</td>
+  </tr>`).join('');
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER: AHP MATRIX
+═══════════════════════════════════════════════════════ */
+function renderAHPMatrix() {
+  const wrap = document.getElementById('ahp-matrix-wrap');
+  const head = `<thead><tr>
+    <th>Kriteria</th>
+    ${CRITERIA.map(c => `<th>${c.id}</th>`).join('')}
+    <th style="background:var(--blue-pale);color:var(--blue)">Bobot W</th>
+  </tr></thead>`;
+  const body = `<tbody>${AHP_MAT.map((row,i) => `<tr>
+    <td><strong>${CRITERIA[i].id}</strong> <small style="color:var(--ink3)">${CRITERIA[i].name.split(' ').slice(0,2).join(' ')}</small></td>
+    ${row.map((v,j) => `<td class="mono ${i===j?'diag-cell':''}">${fractionStr(v)}</td>`).join('')}
+    <td class="mono weight-cell">${pct(W[i])}</td>
+  </tr>`).join('')}</tbody>`;
+  wrap.innerHTML = `<table>${head}${body}</table>`;
+
+  // CR Box
+  const CR = ahpResult.CR;
+  const crBox = document.getElementById('cr-box');
+  const crVal = document.getElementById('cr-val');
+  const crDesc = document.getElementById('cr-desc');
+  crVal.textContent  = `CR = ${CR.toFixed(4)} — ${CR < 0.1 ? 'KONSISTEN ✓' : 'TIDAK KONSISTEN ✗'}`;
+  crDesc.textContent = CR < 0.1
+    ? `λmax = ${ahpResult.lambdaMax.toFixed(4)} · CI = ${ahpResult.CI.toFixed(4)} · RI = ${RI[n]} · CR < 0.10 → matriks perbandingan diterima`
+    : `CR ≥ 0.10 → perlu revisi matriks perbandingan berpasangan`;
+  crBox.className = 'cr-box ' + (CR < 0.1 ? 'cr-ok' : 'cr-bad');
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER: WEIGHT BARS
+═══════════════════════════════════════════════════════ */
+function renderWeightBars() {
+  const wrap = document.getElementById('weight-bars-wrap');
+  const maxW = Math.max(...W);
+  wrap.innerHTML = CRITERIA.map((c,i) => `
+    <div class="weight-row">
+      <div class="weight-label">
+        <strong>${c.id} — ${c.name}</strong>
+        <span>${c.type==='benefit'?'↑ Benefit':'↓ Cost'} · ${c.unit}</span>
+      </div>
+      <div class="weight-bar-outer">
+        <div class="weight-bar-inner" style="width:${(W[i]/maxW*100).toFixed(1)}%"></div>
+      </div>
+      <div class="weight-pct">${pct(W[i])}</div>
+    </div>`).join('');
+
+  // Normalized weight table
+  const wrapT = document.getElementById('norm-weight-table-wrap');
+  const head = `<thead><tr>
+    <th>Kriteria</th>
+    ${CRITERIA.map(c=>`<th>${c.id}</th>`).join('')}
+    <th>Bobot (W)</th>
+  </tr></thead>`;
+  const body = `<tbody>${ahpResult.normMat.map((row,i) => `<tr>
+    <td><strong>${CRITERIA[i].id}</strong></td>
+    ${row.map(v=>`<td class="mono">${f3(v)}</td>`).join('')}
+    <td class="mono weight-cell">${f4(W[i])}</td>
+  </tr>`).join('')}
+  <tr style="background:var(--surface)">
+    <td><strong>Jumlah Kolom</strong></td>
+    ${ahpResult.colSums.map(s=>`<td class="mono">${f3(s)}</td>`).join('')}
+    <td class="mono" style="color:var(--green)"><strong>${W.reduce((a,b)=>a+b,0).toFixed(4)}</strong></td>
+  </tr></tbody>`;
+  wrapT.innerHTML = `<table>${head}${body}</table>`;
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER: SAW MATRICES
+═══════════════════════════════════════════════════════ */
+function renderSAW() {
+  const nm = sawResult.normMatrix;
+  const wm = sawResult.weightedMatrix;
+  const sc = sawResult.scores;
+
+  // Normalization matrix
+  const head = `<thead><tr>
+    <th>Lokasi</th>
+    ${CRITERIA.map(c=>`<th>${c.id}<br><small style="text-transform:none;font-weight:400;color:${c.type==='benefit'?'#0F6E56':'#BA7517'}">${c.type==='benefit'?'↑ Benefit':'↓ Cost'}</small></th>`).join('')}
+  </tr></thead>`;
+  const body = `<tbody>${LOCATIONS.map((l,i)=>`<tr>
+    <td class="loc-cell">${l.id} — ${l.kab}</td>
+    ${nm[i].map(v=>`<td class="mono ${heatClass(v)}">${f4(v)}</td>`).join('')}
+  </tr>`).join('')}</tbody>`;
+  document.getElementById('norm-matrix-wrap').innerHTML = `<table>${head}${body}</table>`;
+
+  // Weighted matrix
+  const wHead = `<thead><tr>
+    <th>Lokasi</th>
+    ${CRITERIA.map((c,j)=>`<th>${c.id}<br><small style="text-transform:none;font-weight:400;color:var(--blue)">W=${pct(W[j])}</small></th>`).join('')}
+  </tr></thead>`;
+  const wBody = `<tbody>${LOCATIONS.map((l,i)=>`<tr>
+    <td class="loc-cell">${l.id} — ${l.kab}</td>
+    ${wm[i].map(v=>`<td class="mono">${f4(v)}</td>`).join('')}
+  </tr>`).join('')}</tbody>`;
+  document.getElementById('weighted-matrix-wrap').innerHTML = `<table>${wHead}${wBody}</table>`;
+
+  // Final score table
+  const fHead = `<thead><tr>
+    <th>Lokasi</th><th>Nama</th>
+    ${CRITERIA.map(c=>`<th>×${c.id}</th>`).join('')}
+    <th style="background:var(--green);color:#fff">Skor SAW (V<sub>i</sub>)</th>
+    <th>Ranking</th>
+  </tr></thead>`;
+  const sorted = [...LOCATIONS.map((l,i)=>({...l,score:sc[i],wi:wm[i]}))]
+    .sort((a,b)=>b.score-a.score);
+  const fBody = `<tbody>${sorted.map((l,rank)=>`<tr>
+    <td class="loc-cell">${l.id}</td>
+    <td>${l.kab}</td>
+    ${l.wi.map(v=>`<td class="mono">${f4(v)}</td>`).join('')}
+    <td class="mono" style="background:var(--green-pale);color:var(--green);font-weight:600">${f4(l.score)}</td>
+    <td>${MEDALS[rank]}</td>
+  </tr>`).join('')}</tbody>`;
+  document.getElementById('final-score-table-wrap').innerHTML = `<table>${fHead}${fBody}</table>`;
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER: RANKING
+═══════════════════════════════════════════════════════ */
+function renderRanking() {
+  // Update header stat
+  document.getElementById('best-id').textContent = ranked[0].id;
+
+  const container = document.getElementById('ranking-cards');
+  container.innerHTML = ranked.map((l, i) => `
+    <div class="rank-card">
+      <div class="rank-row">
+        <div class="rank-num-box ${RANK_CLS[i]}">${MEDALS[i]}</div>
+        <div class="rank-info">
+          <div class="rank-name">${l.name} <small style="font-weight:400;color:var(--ink3)">— ${l.id}</small></div>
+          <div class="rank-kab">${l.kab} · ${l.province}</div>
+          <div class="rank-bar-outer">
+            <div class="rank-bar-inner" style="width:${(l.score/maxScore*100).toFixed(1)}%;background:${BAR_COLORS[i]}"></div>
+          </div>
+          <div class="rank-meta">
+            <span>Kapasitas: ${l.values[4]} ha</span>
+            <span>Jarak permukiman: ${l.values[0]} km</span>
+            <span>Air tanah: ${l.values[2]} m</span>
+            <span class="status-badge ${STATUS[i]}">${STATUS_TXT[i]}</span>
+          </div>
+        </div>
+        <div class="rank-score-box">
+          <div class="rank-score-num">${f4(l.score)}</div>
+          <div class="rank-score-label">Skor SAW</div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER: CHARTS
+═══════════════════════════════════════════════════════ */
+function renderCharts() {
+  // Bar chart
+  new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+      labels: ranked.map(l => l.id + ': ' + l.name),
+      datasets: [{
+        label: 'Skor SAW',
+        data:  ranked.map(l => parseFloat(f4(l.score))),
+        backgroundColor: BAR_COLORS,
+        borderRadius: 8,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => 'Skor: ' + ctx.raw.toFixed(4) } }
+      },
+      scales: {
+        y: { beginAtZero: true, max: 1, ticks: { callback: v => v.toFixed(2) } },
+        x: { ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+
+  // Radar chart (best location contribution)
+  const best = ranked[0];
+  new Chart(document.getElementById('radarChart'), {
+    type: 'radar',
+    data: {
+      labels: CRITERIA.map(c => c.id + ': ' + c.name.split(' ').slice(0,2).join(' ')),
+      datasets: [{
+        label: best.name,
+        data:  best.norm.map(v => parseFloat(v.toFixed(4))),
+        backgroundColor: 'rgba(29,158,117,0.15)',
+        borderColor: '#1D9E75',
+        pointBackgroundColor: '#0F6E56',
+        pointRadius: 5,
+        borderWidth: 2,
+      },{
+        label: 'Rata-rata semua',
+        data: CRITERIA.map((_,j)=>{
+          const col = sawResult.normMatrix.map(r=>r[j]);
+          return parseFloat((col.reduce((a,b)=>a+b,0)/col.length).toFixed(4));
+        }),
+        backgroundColor: 'rgba(24,95,165,0.08)',
+        borderColor: '#185FA5',
+        borderDash: [5,3],
+        pointRadius: 3,
+        borderWidth: 1.5,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } },
+      scales: { r: { beginAtZero: true, max: 1, ticks: { stepSize: 0.25, font: { size: 10 } } } }
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER: RECOMMENDATION
+═══════════════════════════════════════════════════════ */
+function renderRecommendation() {
+  const best = ranked[0];
+  document.getElementById('rec-title').textContent = `Rekomendasi: ${best.name}, ${best.kab}`;
+  document.getElementById('rec-sub').textContent   = `Skor SAW tertinggi: ${f4(best.score)} dari ${LOCATIONS.length} kandidat`;
+  document.getElementById('rec-body-text').innerHTML = `
+    Berdasarkan analisis <strong>AHP + SAW</strong> dengan 7 kriteria evaluasi dan 5 lokasi kandidat di wilayah Jabodetabek,
+    <strong>${best.name}, ${best.kab}</strong> memperoleh skor SAW tertinggi sebesar <strong>${f4(best.score)}</strong>.
+    Keunggulan lokasi ini didukung oleh nilai optimal pada kriteria berbobot tinggi dalam perhitungan AHP
+    (Rasio Konsistensi CR = ${ahpResult.CR.toFixed(3)} &lt; 0.10, matriks dinyatakan konsisten).
+  `;
+  document.getElementById('rec-list').innerHTML = [
+    `Kapasitas lahan ${best.values[4]} ha — terluas di antara semua kandidat, memberikan umur operasional TPA paling panjang`,
+    `Jarak ke permukiman ${best.values[0]} km — melebihi standar minimum SNI 03-3241-1994 (500m), meminimalkan dampak kesehatan masyarakat`,
+    `Kedalaman air tanah ${best.values[2]} m — jauh di atas ambang batas minimum 3m, melindungi kualitas air tanah dari lindi`,
+    `Jarak ke sungai ${best.values[3]} km — aman dari risiko pencemaran badan air permukaan`,
+    `Kemiringan lahan ${best.values[1]}% — masih dalam kisaran operasional yang aman untuk alat berat`,
+    `Permeabilitas tanah ${best.values[6]}×10⁻⁴ cm/s — menunjukkan lapisan tanah yang relatif kedap dan menahan lindi`,
+  ].map(txt => `<li>${txt}</li>`).join('');
+}
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════ */
+function init() {
+  renderLocCards();
+  renderRawTable();
+  renderCriteriaCards();
+  renderAHPMatrix();
+  renderWeightBars();
+  renderSAW();
+  renderRanking();
+  renderCharts();
+  renderRecommendation();
+}
+
+init();
+</script>
+</body>
+</html>
